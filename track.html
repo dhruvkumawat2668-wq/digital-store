@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <p style="text-align:center; margin-top:20%;">Redirecting to Digital Store...</p>
+
+  <script>
+    const SUPABASE_URL = "https://rukjoddkwmjpgktaajcm.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1a2pvZdkrd21qcGdrdGFhamNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NjM1MjQsImV4cCI6MjEwODEzOTUyNH0.T31pwHWbulTctAOEgR9_Q0OSkHm0r9S4I9K3UyrDAUM";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function processClick() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const teamId = urlParams.get('id');
+
+      if (teamId) {
+        await _supabase.from('clicks').insert([{ user_id: teamId }]);
+      }
+      window.location.href = 'index.html';
+    }
+
+    processClick();
+  </script>
+</body>
+</html>
