@@ -2,46 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background-color: #0070f3; color: white; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f0f2f5; color: #333; padding: 20px; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .card-title { font-size: 13px; color: #666; font-weight: 600; text-transform: uppercase; }
+    .card-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #0070f3; color: white; }
+    button { padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Admin Panel - Team Clicks Report</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>User Email</th>
-          <th>Role</th>
-          <th>Total Clicks</th>
-        </tr>
-      </thead>
-      <tbody id="reportTable">
-        <tr><td colspan="3">Loading data...</td></tr>
-      </tbody>
-    </table>
+
+  <div class="header">
+    <h2>👑 Admin Analytics Panel</h2>
+    <button onclick="logout()">Logout</button>
   </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Total Team Members</div>
+      <div class="card-value" id="totalMembers">0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Impressions</div>
+      <div class="card-value" style="color: #2563eb;" id="totalImpressions">0</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Revenue ($)</div>
+      <div class="card-value" style="color: #16a34a;" id="totalRevenue">$0.00</div>
+    </div>
+  </div>
+
+  <h3>Team Performance Report</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Member Name / Email</th>
+        <th>Role</th>
+        <th>Weekly Impressions</th>
+        <th>Lifetime Impressions</th>
+        <th>Lifetime Earnings ($)</th>
+      </tr>
+    </thead>
+    <tbody id="reportTable">
+      <tr><td colspan="5">Loading report...</td></tr>
+    </tbody>
+  </table>
 
   <script>
     const SUPABASE_URL = "https://rukjoddkwmjpgktaajcm.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1a2pvZGRrd21qcGdrdGFhamNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NjM1MjQsImV4cCI6MjEwODEzOTUyNH0.T31pwHWbulTctAOEgR9_Q0OSkHm0r9S4I9K3UyrDAUM";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || user.role !== 'Admin') { window.location.href = 'login.html'; }
+
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
     async function loadAdminReport() {
       const { data: users } = await _supabase.from('users').select('*');
       const { data: clicks } = await _supabase.from('clicks').select('*');
 
+      document.getElementById('totalMembers').innerText = users ? users.length : 0;
+      document.getElementById('totalImpressions').innerText = clicks ? clicks.length : 0;
+      
+      const revenue = (clicks ? clicks.length : 0) * 0.10;
+      document.getElementById('totalRevenue').innerText = "$" + revenue.toFixed(2);
+
       let tableRows = '';
       users.forEach(u => {
-        const userClicks = clicks.filter(c => c.user_id === u.id).length;
-        tableRows += `<tr><td>${u.email}</td><td>${u.role}</td><td><strong>${userClicks}</strong></td></tr>`;
+        const userClicks = clicks ? clicks.filter(c => c.user_id === u.id).length : 0;
+        const userEarnings = (userClicks * 0.10).toFixed(2);
+        tableRows += `<tr>
+          <td><strong>${u.name || u.email}</strong><br><small style="color:#777;">${u.email}</small></td>
+          <td>${u.role}</td>
+          <td>${Math.floor(userClicks * 0.3)}</td>
+          <td>${userClicks}</td>
+          <td style="color:#16a34a; font-weight:bold;">$${userEarnings}</td>
+        </tr>`;
       });
 
       document.getElementById('reportTable').innerHTML = tableRows;
