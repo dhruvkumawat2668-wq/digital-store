@@ -5,10 +5,10 @@
   <title>Team Portal Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f9; }
-    .login-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f4f4f9; margin: 0; }
+    .login-box { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; text-align: center; }
     input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    button { width: 100%; padding: 10px; background: #0070f3; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    button { width: 100%; padding: 10px; background: #0070f3; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -28,20 +28,28 @@
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const emailInput = document.getElementById('email').value.trim();
+      const passwordInput = document.getElementById('password').value.trim();
 
-      const { data, error } = await _supabase.from('users').select('*').eq('email', email).eq('password', password).single();
+      // Supabase se saare users get karke check karenge
+      const { data: users, error } = await _supabase.from('users').select('*');
 
-      if (error || !data) {
-        alert('Invalid Email or Password');
-      } else {
-        localStorage.setItem('user', JSON.stringify(data));
-        if (data.role === 'Admin') {
-          window.location.href = '/admin.html';
+      if (error) {
+        alert('Database Error: ' + error.message);
+        return;
+      }
+
+      const matchedUser = users.find(u => u.email === emailInput && u.password === passwordInput);
+
+      if (matchedUser) {
+        localStorage.setItem('user', JSON.stringify(matchedUser));
+        if (matchedUser.role === 'Admin') {
+          window.location.href = 'admin.html';
         } else {
-          window.location.href = '/dashboard.html';
+          window.location.href = 'dashboard.html';
         }
+      } else {
+        alert('Invalid Email or Password! Please check spelling.');
       }
     });
   </script>
