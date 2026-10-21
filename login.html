@@ -31,7 +31,7 @@
       const emailInput = document.getElementById('email').value.trim();
       const passwordInput = document.getElementById('password').value.trim();
 
-      // Supabase se saare users get karke check karenge
+      // Fetch all users from Supabase
       const { data: users, error } = await _supabase.from('users').select('*');
 
       if (error) {
@@ -43,7 +43,9 @@
 
       if (matchedUser) {
         localStorage.setItem('user', JSON.stringify(matchedUser));
-        if (matchedUser.role === 'Admin') {
+        
+        // Proper Case-Insensitive Role Check for Admin
+        if (matchedUser.role && matchedUser.role.toString().toLowerCase() === 'admin') {
           window.location.href = 'admin.html';
         } else {
           window.location.href = 'dashboard.html';
